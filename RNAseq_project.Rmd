@@ -33,21 +33,17 @@ human_projects <- available_projects(organism = "human")
 ## Encontramos proyecto SRP060205
 project_info <- subset(
   human_projects,
-  project == "SRP060205"
+  project == "SRP107565"
 )
 
 ## Cremos un objeto de tipo RangedSummarizedExperiment (RSE)
 ## con la información a nivel de genes
 
-rse_gene_SRP060205 <- create_rse(project_info)
+rse_gene_SRP107565 <- create_rse(project_info)
 
 ## Visualizamos el objeto
-rse_gene_SRP060205
-## vemos dimensiones de 63856 (genes)  x 144 (muestras)
-
-## Convirtamos las cuentas por nucleotido a cuentas por lectura
-## usando compute_read_counts().
-assay(rse_gene_SRP060205, "counts") <- compute_read_counts(rse_gene_SRP060205)
+rse_gene_SRP107565
+## vemos dimensiones de 63856 (genes)  x 216 (muestras)
 
 ```
 
@@ -63,6 +59,8 @@ colData(rse_gene_SRP060205)[
     ,
     grepl("^sra_attribute", colnames(colData(rse_gene_SRP060205)))
 ]
+
+## Quitamos NAs
 
 ## Pasamos los atributos de caracter a factor
 rse_gene_SRP060205$sra_attribute.diagnosis <- factor(tolower(rse_gene_SRP060205$sra_attribute.diagnosis))
@@ -86,8 +84,16 @@ El dataset nos da 144 muestras de cerebro masculino de tres distintos estados pa
 
 Queremos analizar primero si hay diferencias significativas entre el transcriptoma de los distintos niveles de Alzheimer en el primero grupo de aquellos que tienen demencia. 
 ```{r}
+## Vemos la proporción de lecturas asignadas a genes.
+rse_gene_SRP060205$assigned_gene_prob <-  rse_gene_SRP060205$recount_qc.gene_fc_count_all.assigned / rse_gene_SRP060205$recount_qc.gene_fc_count_all.total
+
 library(ggplot2)
-## Vemos las diferencias entre lso grupos con un scatter plot.
+## Vemos las diferencias entre los grupos con un scatter plot.
+plot_df <- data.frame(rse_gene_SRP060205$external_id, rse_gene_SRP060205$sra_attribute.source_name, rse_gene_SRP060205$assigned_gene_prob)
+
+colnames(plot_df)<- c("external_id", "source_name", "assigned_gene_prob")
+
+## Visualizamos
 ggplot(data=plot_df, aes(x=assigned_gene_prob, y=source_name, color=source_name)) + 
   geom_point() +
   theme(legend.position = "none")
@@ -113,12 +119,12 @@ rse_gene_SRP060205_unfiltered <- rse_gene_SRP060205
 hist(rse_gene_SRP060205_unfiltered$assigned_gene_prob)
 
 ## Quitamos las muestras 
-table(rse_gene_SRP060205$assigned_gene_prob < 0.3)
-rse_gene_SRP045638 <- rse_gene_SRP045638[, rse_gene_SRP045638$assigned_gene_prop > 0.3]
+table(rse_gene_SRP060205$assigned_gene_prob < 0.35)
+rse_gene_SRP060205 <- rse_gene_SRP060205[, rse_gene_SRP060205$assigned_gene_prop > 0.35]
 
 ## Para quitar las muestras que no tienen niveles de expresión significativos calculamos los niveles medios de expresión.
 genes_prom <- rowMeans(assay(rse_gene_SRP060205, "counts"))
-summary(genes_prom)
+
 
 ```
 
