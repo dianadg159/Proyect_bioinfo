@@ -79,11 +79,29 @@ summary(as.data.frame(colData(rse_gene_SRP060205)[
 
 ## Donde MCI es mild cognitive impairment, DEM es dementia y NCI es no cognitive impairment
 ```
-De estos datos elegimos variables de interés para analizar.
+## Exploramos variables de interés
+De estos datos elegimos variables de interés para analizar los cambios en el transcriptoma de pacientes con Alzheimer.
+
+El dataset nos da 144 muestras de cerebro masculino de tres distintos estados patológicos en tres niveles distintos. Los pacientes se dividieron en aquellos que no presentaban impedimento cognitivo (NCI, no cognitive impairment), los que presentaban impedimento cognitivo ligero (MCI, mild cognitive impairment) o aquellos que presentaban demencia (DEM) de los cuales todos presentaban algún nivel de Alzheimer. De esos tres grupo tuvieron 16 casos de cada nivel de Alzheimer: bajo, moderado y alto. 
+
+Queremos analizar primero si hay diferencias significativas entre el transcriptoma de los distintos niveles de Alzheimer en el primero grupo de aquellos que tienen demencia. 
 ```{r}
-## Encontraremos diferencias entre muestras con demencia (DEM) y con muestras de cerebro sin impedimento cognitivo (NCI).
-rse_gene_SRP060205$demVSnci <- factor
-rse_gene_SRP045638$prenatal <- factor(ifelse(rse_gene_SRP045638$sra_attribute.age < 0, "prenatal", "postnatal"))
-table(rse_gene_SRP045638$prenatal)
+library(ggplot2)
+## Vemos las diferencias entre lso grupos con un scatter plot.
+ggplot(data=plot_df, aes(x=assigned_gene_prob, y=source_name, color=source_name)) + 
+  geom_point() +
+  theme(legend.position = "none")
 ```
+Vemos que son bastantes similares los grupos a estudiar, aunque hay mucha variación entre el grupo de con impedimento cognitivo ligero (MCI).
+```{r}
+## Vemos la variación entre los grupos
+
+with(colData(rse_gene_SRP060205), tapply(assigned_gene_prob, sra_attribute.source_name, summary))
+```
+Con la función summary vemos que en el grupo MCI tienen medianas muy distintas entre nivel bajo y nivel alto de Alzheimer. El nivel bajo tiene mediana de 0.3387 y en nivel alto de 0.3695, medias casi invertidas: 0.3618 y 0.3387, respectivamente. 
+
+En el grupo con demencia vemos que comparte similitud con el grupo MCI, sobre todo en los niveles alto y bajo.
+
+En el grupo NCI vemos las probabilidades más altas en los promedios, con 0.3866, 0.3825 y 0.3608 para los niveles bajos, moderados y alto respectivamente. Por niveles también reportaban medianas diferentes; 0.3870, 0.3595 y 0.3608 para los mismos niveles respectivamente. 
+
 
