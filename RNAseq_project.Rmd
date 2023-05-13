@@ -104,4 +104,21 @@ En el grupo con demencia vemos que comparte similitud con el grupo MCI, sobre to
 
 En el grupo NCI vemos las probabilidades más altas en los promedios, con 0.3866, 0.3825 y 0.3608 para los niveles bajos, moderados y alto respectivamente. Por niveles también reportaban medianas diferentes; 0.3870, 0.3595 y 0.3608 para los mismos niveles respectivamente. 
 
+## Limpieza de datos
+```{r}
+## Guardamos los datos crudos
+rse_gene_SRP060205_unfiltered <- rse_gene_SRP060205
+
+## Visualizamos la calidad de las muestras
+hist(rse_gene_SRP060205_unfiltered$assigned_gene_prob)
+
+## Quitamos las muestras 
+table(rse_gene_SRP060205$assigned_gene_prob < 0.3)
+rse_gene_SRP045638 <- rse_gene_SRP045638[, rse_gene_SRP045638$assigned_gene_prop > 0.3]
+
+## Para quitar las muestras que no tienen niveles de expresión significativos calculamos los niveles medios de expresión.
+genes_prom <- rowMeans(assay(rse_gene_SRP060205, "counts"))
+summary(genes_prom)
+
+```
 
