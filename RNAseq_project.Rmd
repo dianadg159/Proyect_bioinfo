@@ -1,0 +1,91 @@
+---
+title: "RNAseq_project"
+output: html_notebook
+---
+
+#Búsqueda de proyecto
+
+En la página de rcount3 R buscámos un proyecto de nuestro agrado. Este proyecto estará orientado a la enfermedad de Alzheimer, entonces buscamos datos disponibles en humanos con Alzheimer.
+
+```{r, echo=TRUE}
+## Cambiar el URL de recount3 a Amazon (AWS)
+
+## Load recount3 R package
+library("recount3")
+
+getOption(
+  "recount3_url",
+  "http://duffel.rail.bio/recount3"
+)
+
+options(recount3_url = "https://recount-opendata.s3.amazonaws.com/recount3/release")
+
+## Confirmando que se cambió el URL
+getOption(
+  "recount3_url",
+  "http://duffel.rail.bio/recount3"
+)
+
+## Vemos los proyectos disponibles de humano y alzheimer
+human_projects <- available_projects(organism = "human")
+
+## De igual forma, podemos exporar los proyectos en:
+## https://jhubiostatistics.shinyapps.io/recount3-study-explorer/?fbclid=IwAR3Q03Og6Rhlyfw4m8uhpb_MYxBT2TH6r4ZLK8K8QUSp-DJjYg8-OK_K2II
+
+## Encontramos proyecto SRP060205
+project_info <- subset(
+  human_projects,
+  project == "SRP060205"
+)
+
+## Cremos un objeto de tipo RangedSummarizedExperiment (RSE)
+## con la información a nivel de genes
+
+rse_gene_SRP060205 <- create_rse(project_info)
+
+## Visualizamos el objeto
+rse_gene_SRP060205
+## vemos dimensiones de 63856 (genes)  x 144 (muestras)
+
+## Convirtamos las cuentas por nucleotido a cuentas por lectura
+## usando compute_read_counts().
+assay(rse_gene_SRP060205, "counts") <- compute_read_counts(rse_gene_SRP060205)
+
+```
+
+# Formateando y visualizando los datos del experimento SRP060205
+```{r}
+## Convirtamos las cuentas por nucleotido a cuentas por lectura
+## usando compute_read_counts().
+assay(rse_gene_SRP060205, "counts") <- compute_read_counts(rse_gene_SRP060205)
+
+## Haciendo el experimento más fácil de usar
+rse_gene_SRP060205 <- expand_sra_attributes(rse_gene_SRP060205)
+colData(rse_gene_SRP060205)[
+    ,
+    grepl("^sra_attribute", colnames(colData(rse_gene_SRP060205)))
+]
+
+## Pasamos los atributos de caracter a factor
+rse_gene_SRP060205$sra_attribute.diagnosis <- factor(tolower(rse_gene_SRP060205$sra_attribute.diagnosis))
+
+rse_gene_SRP060205$sra_attribute.source_name <- factor(rse_gene_SRP060205$sra_attribute.source_name)
+
+rse_gene_SRP060205$sra_attribute.tissue <- factor(tolower(rse_gene_SRP060205$sra_attribute.tissue))
+
+## Vemos el resumen de las variables de interés
+summary(as.data.frame(colData(rse_gene_SRP060205)[
+    ,
+    grepl("^sra_attribute.[diagnosis|source_name|tissue]", colnames(colData(rse_gene_SRP060205)))
+]))
+
+## Donde MCI es mild cognitive impairment, DEM es dementia y NCI es no cognitive impairment
+```
+De estos datos elegimos variables de interés para analizar.
+```{r}
+## Encontraremos diferencias entre muestras con demencia (DEM) y con muestras de cerebro sin impedimento cognitivo (NCI).
+rse_gene_SRP060205$demVSnci <- factor
+rse_gene_SRP045638$prenatal <- factor(ifelse(rse_gene_SRP045638$sra_attribute.age < 0, "prenatal", "postnatal"))
+table(rse_gene_SRP045638$prenatal)
+```
+
