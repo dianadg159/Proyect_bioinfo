@@ -315,3 +315,7 @@ col.group <- as.character(col.group)
 plotMDS(vGene$E, labels = df_heatmap$Agent, col = col.group)
 ```
 # Conclusiones
+
+Los datos de expresión que sacamos del dataset estudiado nos dicen que hay una mayor carga de expresión dieferencial entre lineas celulares. Esto es lógico puesto a que cada línea celular expresa un subtipo diferente de cáncer de mama y por consiguiente debería haber expresiones de distintos genes a distintos niveles. Esto fue lo que se hizo más evidente en las gráficas de heatmaps.
+
+En las gráficas de multidimensional scaling vemos que hay una gran presencia de abemaciclib, siendo que esperabamos ver más resultados con palbociclib.
