@@ -89,43 +89,41 @@ summary(as.data.frame(colData(rse_gene_SRP107565)[
 ## Vemos que hay dos columnas que se repiten, entonces podemos usar cualquiera de las dos.
 ## Ya sea cell_line o source_name.
 ```
-## Exploramos variables de interés
-De estos datos elegimos variables de interés para analizar los cambios en el transcriptoma de pacientes con Alzheimer.
-
-El dataset nos da 144 muestras de cerebro masculino de tres distintos estados patológicos en tres niveles distintos. Los pacientes se dividieron en aquellos que no presentaban impedimento cognitivo (NCI, no cognitive impairment), los que presentaban impedimento cognitivo ligero (MCI, mild cognitive impairment) o aquellos que presentaban demencia (DEM) de los cuales todos presentaban algún nivel de Alzheimer. De esos tres grupo tuvieron 16 casos de cada nivel de Alzheimer: bajo, moderado y alto. 
-
-Queremos analizar primero si hay diferencias significativas entre el transcriptoma de los distintos niveles de Alzheimer en el primero grupo de aquellos que tienen demencia. 
+## Exploramos variables de interés para ver calidad.
+ 
 ```{r}
 ## Vemos la proporción de lecturas asignadas a genes.
-rse_gene_SRP060205$assigned_gene_prob <-  rse_gene_SRP060205$recount_qc.gene_fc_count_all.assigned / rse_gene_SRP060205$recount_qc.gene_fc_count_all.total
+rse_gene_SRP107565$assigned_gene_prob <- rse_gene_SRP107565$recount_qc.gene_fc_count_all.assigned/rse_gene_SRP107565$recount_qc.gene_fc_count_all.total
+summary(rse_gene_SRP107565$assigned_gene_prob)
 
 library(ggplot2)
-## Vemos las diferencias entre los grupos con un scatter plot.
-plot_df <- data.frame(rse_gene_SRP060205$external_id, rse_gene_SRP060205$sra_attribute.source_name, rse_gene_SRP060205$assigned_gene_prob)
+## Hacer un data.frame para graficar más fácil.
+plot_df <- as.data.frame(colData(rse_gene_SRP107565)[
+    ,
+    grepl("^sra_attribute", colnames(colData(rse_gene_SRP107565)))
+])
 
-colnames(plot_df)<- c("external_id", "source_name", "assigned_gene_prob")
+colnames(plot_df)<- c("agent", "cell_line", "dose", "source_name", "time")
+plot_df$assigned_gene_prob <- rse_gene_SRP107565$assigned_gene_prob
 
+## Vemos las diferencias entre los grupos de tratamiento con un scatter plot.
 ## Visualizamos
-ggplot(data=plot_df, aes(x=assigned_gene_prob, y=source_name, color=source_name)) + 
+ggplot(data=plot_df, aes(x=assigned_gene_prob, y=agent, color=agent)) + 
   geom_point() +
   theme(legend.position = "none")
 ```
-Vemos que son bastantes similares los grupos a estudiar, aunque hay mucha variación entre el grupo de con impedimento cognitivo ligero (MCI).
+Vemos que son bastantes similares los grupos a estudiar, las líneas celulares tratadas con ribociclib y palbociclib son tienen una proporción más alta de genes asignados que abemaciclib.
 ```{r}
 ## Vemos la variación entre los grupos
 
-with(colData(rse_gene_SRP060205), tapply(assigned_gene_prob, sra_attribute.source_name, summary))
+with(colData(rse_gene_SRP107565), tapply(assigned_gene_prob, sra_attribute.agent, summary))
 ```
-Con la función summary vemos que en el grupo MCI tienen medianas muy distintas entre nivel bajo y nivel alto de Alzheimer. El nivel bajo tiene mediana de 0.3387 y en nivel alto de 0.3695, medias casi invertidas: 0.3618 y 0.3387, respectivamente. 
-
-En el grupo con demencia vemos que comparte similitud con el grupo MCI, sobre todo en los niveles alto y bajo.
-
-En el grupo NCI vemos las probabilidades más altas en los promedios, con 0.3866, 0.3825 y 0.3608 para los niveles bajos, moderados y alto respectivamente. Por niveles también reportaban medianas diferentes; 0.3870, 0.3595 y 0.3608 para los mismos niveles respectivamente. 
+Con la función summary vemos que en el grupo los tres grupos tienen la probabilidad de asociarse con genes muy similar, si bien el que tiene un promedio más bajo es ribociclib pero no por mucho (omitiendo el grupo control). Casi todos tienen una mediana muy similar, pero donde vemos las mejores proporciones es con las muestras con palbocilcib. En el grupo de palbociclib vemos que tienen un mínimo de 0.5839, el más alto de los otros dos grupos, así como el primer cuartil y también la media más alta.
 
 ## Limpieza de datos
 ```{r}
 ## Guardamos los datos crudos
-rse_gene_SRP060205_unfiltered <- rse_gene_SRP060205
+rse_gene_SRP107565_unfiltered <- rse_gene_SRP107565
 
 ## Visualizamos la calidad de las muestras
 hist(rse_gene_SRP060205_unfiltered$assigned_gene_prob)
