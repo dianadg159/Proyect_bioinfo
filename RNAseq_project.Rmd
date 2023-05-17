@@ -259,5 +259,59 @@ plotMA(eb_results, coef = 4)
 ## Graficamos por dosis y por tiempo
 plotMA(eb_results, coef = 11)
 plotMA(eb_results, coef = 12)
+
+## Graficamos los volcanoplot por variable de tratamiento
+volcanoplot(eb_results, coef = 2, highlight = 3, names = de_results$gene_name)
+volcanoplot(eb_results, coef = 3, highlight = 3, names = de_results$gene_name) #palbociclib
+volcanoplot(eb_results, coef = 4, highlight = 3, names = de_results$gene_name)
+```
+Los volcano plots nos dan la facilidad de ver los genes asociados. Como en este análisis nos centramos en el efecto de palbociclib utilizamos los genes "ERBB2", "ULK1" y "WDR48". Estos los podemos buscar en nuestros resultados de DEGs.
+```{r}
+## Buscando los DEGs
+de_results[de_results$gene_name %in% c("ERBB2", "ULK1", "WDR48"), ]
 ```
 
+Ahora podemos revisar los top 50 diferencialmente expresados.
+```{r}
+## Extraer valores de los primeros cincuenta genes
+heatmap <- vGene$E[rank(de_results$adj.P.Val) <= 50, ]
+
+## Creemos una tabla con las muestras
+df_heatmap <- as.data.frame(colData(rse_gene_SRP107565)[, c("sra_attribute.agent", "sra_attribute.cell_line", "sra_attribute.dose", "sra_attribute.time")])
+colnames(df_heatmap) <- c("Agent", "Cell line", "Dose (uM)", "Time (hr)")
+
+## Heatmap
+library("pheatmap")
+pheatmap(
+    heatmap,
+    cluster_rows = TRUE,
+    cluster_cols = TRUE,
+    show_rownames = TRUE,
+    show_colnames = FALSE,
+    annotation_col = df_heatmap
+)
+```
+El heatmap no nos deja ver mucha diferencia entre las muestras, pero se puede llegar a ver algunas diferencias entre tipos celulares, ya que se van dividiendo algunas de las columnas por línea celular.
+
+Ahora vamos a hacer un multidimensional scaling.
+```{r}
+## Para colores
+library("RColorBrewer")
+
+## Conviertiendo los grupos de edad a colores
+col.group <- df_heatmap$`Cell line`
+levels(col.group) <- brewer.pal(nlevels(col.group), "Set1")
+col.group <- as.character(col.group)
+
+## MDS por grupos de línea celular
+plotMDS(vGene$E, labels = df_heatmap$`Cell line`, col = col.group)
+
+## Convirtiendo los grupos de tratamiento
+col.group <- df_heatmap$Agent
+levels(col.group) <- brewer.pal(nlevels(col.group), "Set1")
+col.group <- as.character(col.group)
+
+## MDS por grupos de tratamiento
+plotMDS(vGene$E, labels = df_heatmap$Agent, col = col.group)
+```
+# Conclusiones
