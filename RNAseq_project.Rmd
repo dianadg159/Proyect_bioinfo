@@ -128,15 +128,98 @@ Con la función summary vemos que en el grupo los tres grupos tienen la probabil
 rse_gene_SRP107565_unfiltered <- rse_gene_SRP107565
 
 ## Visualizamos la calidad de las muestras
-hist(rse_gene_SRP060205_unfiltered$assigned_gene_prob)
+ggplot(data=plot_df, aes(x=assigned_gene_prob)) +
+  geom_histogram(fill = "coral") +
+  geom_vline(xintercept = 0.6, colour = "chocolate")
 
-## Quitamos las muestras 
-table(rse_gene_SRP060205$assigned_gene_prob < 0.35)
-rse_gene_SRP060205 <- rse_gene_SRP060205[, rse_gene_SRP060205$assigned_gene_prop > 0.35]
+## Quitamos las muestras que tengan proporción menor a 0.6
+table(rse_gene_SRP107565$assigned_gene_prob < 0.6)
+rse_gene_SRP107565 <- rse_gene_SRP107565[, rse_gene_SRP107565$assigned_gene_prob > 0.6]
 
 ## Para quitar las muestras que no tienen niveles de expresión significativos calculamos los niveles medios de expresión.
-genes_prom <- rowMeans(assay(rse_gene_SRP060205, "counts"))
+genes_prom <- rowMeans(assay(rse_gene_SRP107565, "counts"))
+summary(genes_prom)
 
+## Quitamos los genes que tengan niveles medios de expresión menores a uno.
+rse_gene_SRP107565 <- rse_gene_SRP107565[genes_prom > 0.1, ]
+dim(rse_gene_SRP107565)
 
+## Visualizamos el porcentaje de gens que retuvimos
+round(nrow(rse_gene_SRP107565) / nrow(rse_gene_SRP107565_unfiltered) * 100, 2)
+
+```
+Primeramente quitamos aquellas muestras que tenían una baja proporción de genes asignados. Vemos que en el histograma hay pocas muestras con una proporción baja, entonces podemos poner un umbral un poco alto de 0.6 para hacer un corte. Ahora limpiamos genes; quitamos los genes que tenían un valor de expresión menores a 0.1, puesto que habí muchos con valor de cero y tenemos dimensiones finales de 34,554 genes en nuestro objeto de summarized experiment.
+
+# Normalización
+
+Para poder hacer buenos estadísticos con nuestros datos hay que normalizarlos.
+```{r}
+## Hacemos el objeto que nos permite normalizar los datos de expresión
+dge <- DGEList(
+  counts = assay(rse_gene_SRP107565, "counts"),
+  genes = rowData(rse_gene_SRP107565)
+)
+
+dge <- calcNormFactors(dge)
+```
+
+# Expresión diferencial
+
+Exploramos de nuevo los datos que acabamos de limpiar.
+Separamos primero los datos con palbociclib, puesto a que es el que tenía más diferencias en la sección de exploración de variables, para que podamos ver cómo funciona la expresión entre las dos variables de tiempo que se reportaron (6 y 24 horas).
+```{r}
+## Separamos cada uno de los grupos a estudiar.
+palbociclib <- rse_gene_SRP107565[,rse_gene_SRP107565$sra_attribute.agent == "palbociclib"]
+#abemaciclib <- rse_gene_SRP107565[, rse_gene_SRP107565$sra_attribute.agent == "abemaciclib"]
+#ribociclib <- rse_gene_SRP107565[, rse_gene_SRP107565$sra_attribute.agent == "ribociclib"]
+control <- rse_gene_SRP107565[, rse_gene_SRP107565$sra_attribute.agent == "control"]
+
+## Vemos las diferencias entre los los tiempos de acción en palbociclib.
+ggplot(data=as.data.frame(colData(palbociclib)), aes(x=factor(sra_attribute.time), y=assigned_gene_prob)) +
+  geom_boxplot(aes(fill = sra_attribute.time)) +
+  theme(legend.position="none") +
+  ylab("Assigned Gene Prop") +
+  xlab("Time (hr)") +
+  ggtitle("Palbociclib")
+
+## Vemos diferencias entre los tiempos de acción del control.
+ggplot(data=as.data.frame(colData(control)), aes(x=factor(sra_attribute.time), y=assigned_gene_prob)) +
+  geom_boxplot(aes(fill = sra_attribute.time)) +
+  theme(legend.position="none") +
+  ylab("Assigned Gene Prop") +
+  xlab("Time (hr)") +
+  ggtitle("control")
+
+## Vemos las diferencias entre líneas celulares y palbociclib
+ggplot(data=as.data.frame(colData(palbociclib)), aes(x=sra_attribute.cell_line, y=assigned_gene_prob)) +
+  geom_boxplot(aes(fill = sra_attribute.cell_line)) +
+  theme(legend.position="none") +
+  ylab("Assigned Gene Prop") +
+  xlab("Cell line") +
+  ggtitle("Palbociclib")
+
+## Ahora en el grupo control
+ggplot(data=as.data.frame(colData(control)), aes(x=sra_attribute.cell_line, y=assigned_gene_prob)) +
+  geom_boxplot(aes(fill = sra_attribute.cell_line)) +
+  theme(legend.position="none") +
+  ylab("Assigned Gene Prop") +
+  xlab("Cell line") +
+  ggtitle("Control")
+
+## Por último comparamos por dosis en palbociclib
+ggplot(data=as.data.frame(colData(palbociclib)), aes(x=factor(sra_attribute.dose), y=assigned_gene_prob)) +
+  geom_boxplot(aes(fill = factor(sra_attribute.dose))) +
+  theme(legend.position="none") +
+  ylab("Assigned Gene Prop") +
+  xlab("Dose (mM)") +
+  ggtitle("Palbociclib")
+
+## Y ahora en los datos del grupo control
+ggplot(data=as.data.frame(colData(control)), aes(x=factor(sra_attribute.dose), y=assigned_gene_prob)) +
+  geom_boxplot(aes(fill = factor(sra_attribute.dose))) +
+  theme(legend.position="none") +
+  ylab("Assigned Gene Prop") +
+  xlab("Dose (mM)") +
+  ggtitle("Control")
 ```
 
