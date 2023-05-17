@@ -298,14 +298,6 @@ Ahora vamos a hacer un multidimensional scaling.
 ## Para colores
 library("RColorBrewer")
 
-## Conviertiendo los grupos de edad a colores
-col.group <- df_heatmap$`Cell line`
-levels(col.group) <- brewer.pal(nlevels(col.group), "Set1")
-col.group <- as.character(col.group)
-
-## MDS por grupos de línea celular
-plotMDS(vGene$E, labels = df_heatmap$`Cell line`, col = col.group)
-
 ## Convirtiendo los grupos de tratamiento
 col.group <- df_heatmap$Agent
 levels(col.group) <- brewer.pal(nlevels(col.group), "Set1")
@@ -314,8 +306,20 @@ col.group <- as.character(col.group)
 ## MDS por grupos de tratamiento
 plotMDS(vGene$E, labels = df_heatmap$Agent, col = col.group)
 ```
+Vemos que abemaciclib está muy presente en todos los clusters del mapa de multidimensional scaling, podemos entonces ver cuáles son sus genes más representativos asociados al tratamiento.
+```{r}
+## Vemos genes estadísticamente significativos asociados al tratamiento de abemaciclib.
+head(vGene[,rse_gene_SRP107565$sra_attribute.agent == "abemaciclib"]$genes[rank(de_results$adj.P.Val) <= 50, ])
+```
+
 # Conclusiones
 
-Los datos de expresión que sacamos del dataset estudiado nos dicen que hay una mayor carga de expresión dieferencial entre lineas celulares. Esto es lógico puesto a que cada línea celular expresa un subtipo diferente de cáncer de mama y por consiguiente debería haber expresiones de distintos genes a distintos niveles. Esto fue lo que se hizo más evidente en las gráficas de heatmaps.
+Los datos de expresión que sacamos del dataset estudiado nos dicen que hay una mayor carga de expresión dieferencial entre lineas celulares. Esto es lógico puesto a que cada línea celular expresa un subtipo diferente de cáncer de mama y por consiguiente debería haber expresiones de distintos genes a distintos niveles. Esto fue lo que se hizo más evidente en la gráfica de heatmap. También observamos que existen genes que están expresados negativamente en al menos cuatro de las siete líneas celulares que se usaron, independientemente del tratamiento que se usó (ENSG00000235123.5 y ENSG00000160182.2). Por el contrario hay genes que se dieferenciaron mucho positivamente (ENSG00000171345.13 y ENSG00000101210.10) en todas las líneas celulares, menos en HS578T y BT549.
 
-En las gráficas de multidimensional scaling vemos que hay una gran presencia de abemaciclib, siendo que esperabamos ver más resultados con palbociclib.
+HS578T es un alínea celular perteneciente a cáncer de mama triple negativo que tiene una deleción homocigota una CDKN2A que podría hablarnos de eficiencia de los inhibidores de ciclina, puesto a que no solamente tiene la deleción en CDKN2A, sino que tal vez su mecanismo de compensación con otras ciclinas también está siendo afectado. 
+
+BT549 también es de cáncer de mama triple negativo, esto nos puede decir que los inhibidores de ciclinas sirven en cánceres agresivos y avanzados como el raro pero presente triple negativo en comparación con los estrógeno positivo.
+
+En la gráfica de multidimensional scaling vemos que hay una gran presencia de abemaciclib, siendo que esperabamos ver más resultados con palbociclib, esto nos dice que hay una mayor cantidad de expresión diferencial en genes activados/reducidos gracias al tratamiento de abemaciclib. MCMBP está en el complejo de mantenimiento minicromosomal hexamérico que regula la iniciación y elongación del ADN, TOLLIP regula señalización de inflamación e interviene en la regulación de interleucinas, CTSD es una peptidasa importante para la activación proteolítica de hormonas y factores de crecimiento y WEE1 que es una cinasa importante en el checkpoint de G2 del ciclo celular.
+
+Es entonces posible demostrar que abemaciclib es un inhibidor de ciclinas efectivo en cánceres agresivos y avanzados de cáncer de mama gracias a su intervención en vías de genes que regulan el ciclo celular y supervisan que haya un ambiente efectivo para la proliferación.
