@@ -7,3 +7,5 @@ El proyecto consiste en hacer un análisis de expresión diferencial de un datas
 1. Conocer el pipeline implricado en hacer un análisis de expresión diferencial.
 2. Aprender el manejo de herramientas como gráficas y modelos estadísticos para el análisis de expresión diferencial.
 3. Obtener una interpretación biológica a partir del mismo análisis. 
+## Liga HTML
+https://dianadg159.github.io/RNAseq_project.html
