@@ -51,31 +51,43 @@ rse_gene_SRP107565
 ```{r}
 ## Convirtamos las cuentas por nucleotido a cuentas por lectura
 ## usando compute_read_counts().
-assay(rse_gene_SRP060205, "counts") <- compute_read_counts(rse_gene_SRP060205)
+assay(rse_gene_SRP107565, "counts") <- compute_read_counts(rse_gene_SRP107565)
 
 ## Haciendo el experimento más fácil de usar
-rse_gene_SRP060205 <- expand_sra_attributes(rse_gene_SRP060205)
-colData(rse_gene_SRP060205)[
+rse_gene_SRP107565 <- expand_sra_attributes(rse_gene_SRP107565)
+colData(rse_gene_SRP107565)[
     ,
-    grepl("^sra_attribute", colnames(colData(rse_gene_SRP060205)))
+    grepl("^sra_attribute", colnames(colData(rse_gene_SRP107565)))
 ]
 
-## Quitamos NAs
-
 ## Pasamos los atributos de caracter a factor
-rse_gene_SRP060205$sra_attribute.diagnosis <- factor(tolower(rse_gene_SRP060205$sra_attribute.diagnosis))
+rse_gene_SRP107565$sra_attribute.agent <- factor(tolower(rse_gene_SRP107565$sra_attribute.agent))
 
-rse_gene_SRP060205$sra_attribute.source_name <- factor(rse_gene_SRP060205$sra_attribute.source_name)
+rse_gene_SRP107565$sra_attribute.cell_line <- factor(toupper(rse_gene_SRP107565$sra_attribute.cell_line))
 
-rse_gene_SRP060205$sra_attribute.tissue <- factor(tolower(rse_gene_SRP060205$sra_attribute.tissue))
+## Seleccionamos solo los valores numéricos para el atributo dose
+match <- gregexpr("([0-9]*[.])?[0-9]+", rse_gene_SRP107565$sra_attribute.dose)
+x <- regmatches(rse_gene_SRP107565$sra_attribute.dose, match)
+
+rse_gene_SRP107565$sra_attribute.dose <- as.numeric(x)
+
+## Seleccionamos todos los caracteres hasta el primer espacio en source.name
+library(stringr)
+x <- word(rse_gene_SRP107565$sra_attribute.source_name, 1)
+rse_gene_SRP107565$sra_attribute.source_name <- factor(x)
+
+## Seleccionamos solo los número de las horar en time
+x <- str_extract(rse_gene_SRP107565$sra_attribute.time, "(\\d+)(?=\\s+hr)")
+rse_gene_SRP107565$sra_attribute.time <- as.numeric(x)
 
 ## Vemos el resumen de las variables de interés
-summary(as.data.frame(colData(rse_gene_SRP060205)[
+summary(as.data.frame(colData(rse_gene_SRP107565)[
     ,
-    grepl("^sra_attribute.[diagnosis|source_name|tissue]", colnames(colData(rse_gene_SRP060205)))
+    grepl("^sra_attribute.[agent|cell_line|dose|source_name|time]", colnames(colData(rse_gene_SRP107565)))
 ]))
 
-## Donde MCI es mild cognitive impairment, DEM es dementia y NCI es no cognitive impairment
+## Vemos que hay dos columnas que se repiten, entonces podemos usar cualquiera de las dos.
+## Ya sea cell_line o source_name.
 ```
 ## Exploramos variables de interés
 De estos datos elegimos variables de interés para analizar los cambios en el transcriptoma de pacientes con Alzheimer.
