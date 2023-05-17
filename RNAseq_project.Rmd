@@ -222,4 +222,42 @@ ggplot(data=as.data.frame(colData(control)), aes(x=factor(sra_attribute.dose), y
   xlab("Dose (mM)") +
   ggtitle("Control")
 ```
+# Modelo Estadístico 
+```{r}
+## Computamos el modelo estadístico
+mod <- model.matrix(~ sra_attribute.agent + sra_attribute.cell_line + sra_attribute.dose + sra_attribute.time + assigned_gene_prob, data = colData(rse_gene_SRP107565))
+colnames(mod)
+```
+
+# Análisis diferencial
+```{r}
+## Usamos lima para el análisis de expresión diferencial
+library("limma")
+vGene <- voom(dge, mod, plot = TRUE)
+
+eb_results <- eBayes(lmFit(vGene))
+
+de_results <- topTable(
+    eb_results,
+    coef = 2,
+    number = nrow(rse_gene_SRP107565),
+    sort.by = "none"
+)
+## Vemos las dimensiones de los genes diferencialmente diferenciados
+dim(de_results)
+## Visualizamos los primero 6 que nos arroja el análisis diferencial.
+head(de_results)
+## Vemos cuantos genes diferencialmente expresados con un p-valor menor a 0.05 tenemos
+table(de_results$adj.P.Val < 0.05)
+```
+```{r}
+## Graficamos el modelo estadístico con las variables correspondientes a tratamiento
+plotMA(eb_results, coef = 3)
+plotMA(eb_results, coef = 2)
+plotMA(eb_results, coef = 4)
+
+## Graficamos por dosis y por tiempo
+plotMA(eb_results, coef = 11)
+plotMA(eb_results, coef = 12)
+```
 
